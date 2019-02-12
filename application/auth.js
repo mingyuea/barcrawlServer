@@ -1,18 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
+const cEnc = require('./cookieEncrypt.js');
+
 const mongoose = require('mongoose');
 const User = require('../models/User.js');
 const UserModel = mongoose.model('UserModel');
 const Route = require('../models/Route.js');
 const RouteModel = mongoose.model('RouteModel');
-const bcrypt = require('bcrypt');
-const cEnc = require('./cookieEncrypt.js');
-const db = mongoose.connection;
+
 const saltRounds = 15;
 
 
 router.post('/auth/signup', async (req, res) => {
-	let username = req.body.username;
+	let { username, password } = req.body;
 	let existBool = await UserModel.checkExist(username);
 	//console.log(existBool);
 
@@ -21,10 +22,10 @@ router.post('/auth/signup', async (req, res) => {
 	}
 	else{
 		let uID = new mongoose.Types.ObjectId();
-		//let idString = String(uID);
-		console.log(idString);
+		let idString = String(uID);
+		//console.log(idString);
 		bcrypt.genSalt(saltRounds, (err, salt) => {
-			bcrypt.hash(req.body.password, salt, (err, hash) => {
+			bcrypt.hash(password, salt, (err, hash) => {
 				var newUser = new UserModel({
 					_id: uID,
 					username: username,
@@ -34,24 +35,36 @@ router.post('/auth/signup', async (req, res) => {
 
 				newUser.save((err, doc) =>{
 					if(err){
-						return {"Database error": err}
+						errMsg = "There was an error while creating the userModel: " + err;
+						console.log(errMsg);
+						res.send({'actionSuccess': false, 'error': errMsg});
 					}
-					//console.log(doc);
 				});
+
+				var newRoute = new RouteModel({
+					userID: idString
+				});
+
+				newRoute.save((err) => {
+					if(err){
+						errMsg = "There was an error while creating the routeModel: " + err;
+						console.log(errMsg);
+						res.send({'actionSuccess': false, 'error': errMsg});
+					}
+				})
 			});
 		});
 
 		let enc = cEnc.cookieEncrypt(idString, true);
 
 		res.cookie('uid', enc, {maxAge:604800000});
-		res.send({'enc': enc});
+		res.send({'actionSuccess': true, 'redir': '/static/home'});
 	}
 });
 
 
 router.post('/auth/login', async (req, res) => {
-	let username = req.body.username;
-	let password = req.body.password;
+	let { username, password } = req.body;
 	let existBool = await UserModel.checkExist(username);
 
 	if(existBool){
@@ -62,11 +75,11 @@ router.post('/auth/login', async (req, res) => {
 			compBool = await bcrypt.compare(password, pass);
 		} catch(err){
 			console.log(err);
-			res.send({'actionSuccess': false, 'error': 'Compare error: ' + err});
+			res.send({'actionSuccess': false, 'error': 'Error while fetching password: ' + err});
 		}
 
 		if(compBool){
-			let userObj = await UserModel.getUserID(username);
+			/*let userObj = await UserModel.getUserID(username);
 			let uid = userObj['_userID'];
 			let routeBool = await RouteModel.checkExist(uid);
 			let enc = cEnc.cookieEncrypt(uid, true);
@@ -77,7 +90,9 @@ router.post('/auth/login', async (req, res) => {
 			}
 			else{
 				redir = '/init/home';
-			}
+			}*/
+
+			let redir = "/static/home"
 
 			res.cookie('uid', enc, {maxAge:604800000});
 			res.send({'actionSuccess': true, 'redir': redir});
@@ -93,9 +108,9 @@ router.post('/auth/login', async (req, res) => {
 
 
 router.get('/auth/tmp', (req, res) => {
-	let enc = cEnc.cookieEncrypt('tmp', true);
-	res.cookie('uid', enc, {maxAge:1800000});
-	res.send({'actionSuccess': true, 'redir': '/init/home'});
+	//let enc = cEnc.cookieEncrypt('tmp', true);
+	res.cookie("uid", "tmp", {maxAge:1800000});
+	res.send({'actionSuccess': true, 'redir': '/static/tmp'});
 })
 
 

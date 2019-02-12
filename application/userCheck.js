@@ -1,8 +1,10 @@
+const path = require('path');
+
 module.exports = function(req, res, next){
-	if(req.cookies.uid){
-		next()
+	if(req.cookies.uid && req.cookies.uid != "tmp"){
+		next();
 	}
 	else{
-		res.redirect(403,'/');
+		//res.sendFile(path.join(__dirname, "..", "dist", 'auth.html'));
 	}
 }
