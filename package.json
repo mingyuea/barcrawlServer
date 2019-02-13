@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": "10.14.0"
+  },
   "scripts": {
     "start": "node application/server.js",
     "dev": "nodemon -- watch application/server.js"

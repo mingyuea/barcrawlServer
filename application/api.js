@@ -102,7 +102,7 @@ router.get('/api/deleteRoute', async (req, res) => {
 
 router.get('/api/getRoute', async (req, res) => {
 	let uid = res.locals.uid;
-	console.log('the userid is' + uid);
+	//console.log('the userid is' + uid);
 	if(uid == "tmp"){
 		res.send({'actionSuccess': false, 'error': 'You are using a temporary account, your route info was not saved'});
 	}

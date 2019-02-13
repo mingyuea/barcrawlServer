@@ -115,10 +115,6 @@ router.get('/auth/tmp', (req, res) => {
 
 
 router.get('/auth/logout', (req, res) => {
-	/*let cookies = req.cookies;
-	let decryp = cEnc.cookieEncrypt(cookies.uid, false);
-	console.log(decryp);
-	res.send({'dec': decryp})*/
 	res.clearCookie('uid');
 	res.send({'actionSuccess': true});
 });

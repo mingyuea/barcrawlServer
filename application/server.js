@@ -12,8 +12,8 @@ const userCheck  = require('./userCheck.js');
 const auth       = require('./auth.js');
 const static     = require('./static.js');
 const api        = require('./api.js');
-//const mongoDB = process.env.MONGODB_URI || 'http://localhost:27017';
-const mongoDB    = 'mongodb://localhost:27017';
+const mongoDB = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+//const mongoDB    = 'mongodb://localhost:27017';
 
 mongoose.connect(mongoDB).then(()=> console.log("DB connected!")).catch(err => {console.log(`Database connection error: ${err}`)});;
 //const db = mongoose.connection;
@@ -44,22 +44,19 @@ app.use((req, res, next) =>{
 
 app.get('/', (req, res) => {
 	if(res.locals.uid){
-		console.log("has uid: " + res.locals.uid)
+		//console.log("has uid: " + res.locals.uid)
 		res.redirect('/static/tmp');
 	}
 	else{
 		res.redirect('/static/auth');
-		console.log("doesnt have uid");
+		//console.log("doesnt have uid");
 	}
-	//res.send({"uid": res.locals.uid})
 });
 
 app.use(auth);
 //app.use(userCheck);
 app.use(static);
 app.use(api);
-//app.use('/home', express.static(path.join(__dirname, "..", "/dist")))
-
 
 app.listen(PORT, () => 
 	console.log('app is runnning on port 5000')
