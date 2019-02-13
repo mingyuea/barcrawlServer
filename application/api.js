@@ -5,13 +5,12 @@ const cEnc = require('./cookieEncrypt.js');
 const mongoose = require('mongoose');
 const Route = require('../models/Route.js');
 const RouteModel = mongoose.model('RouteModel');
-const https = require('https');
 
 const apiKey = "bGrMQxZPk3x6BKe-p9rljIC29lESM1hkSEkuc8gsW7iaeD2nLxbLRlYzc1-CDCGJ-ZJDGpzr-klFDXYpH_itOsJQYWoPE5wwqtdAzEZ1itZxs3ia2zL6MdnJQPN4W3Yx";
 //this should be in server.js, before anything else. if cookie is empty, redirect to login
 
 
-router.post('/api/init', async (req, res) => {
+/*router.post('/api/init', async (req, res) => {
 	let uid = res.locals.uid;
 	let routeObj;
 
@@ -24,7 +23,7 @@ router.post('/api/init', async (req, res) => {
 	}
 
 	res.send({"actionSuccess": true, "routeObj": routeObj})
-})
+});
 
 
 router.post('/api/search', async (req, res) => {
@@ -67,10 +66,11 @@ router.post('/api/search', async (req, res) => {
 		console.log("There was an error accessing the Yelp API: " + err.description);
 		res.send({"actionSuccess": false, "error": err.description});
 	});
-})
+})*/
 
 
-router.post('/api/createRoute', async (req, res) => {
+
+router.post('/api/saveRoute', async (req, res) => {
 	let uid = res.locals.uid;
 	//let myRoute = ['a','b','c'];
 	let { routeArr }= req.body;

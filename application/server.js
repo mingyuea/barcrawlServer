@@ -12,6 +12,7 @@ const userCheck  = require('./userCheck.js');
 const auth       = require('./auth.js');
 const static     = require('./static.js');
 const api        = require('./api.js');
+const search	 = require('./search.js');
 const mongoDB = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 //const mongoDB    = 'mongodb://localhost:27017';
 
@@ -42,14 +43,14 @@ app.use((req, res, next) =>{
 	next();
 });
 
+app.use(search);
+
 app.get('/', (req, res) => {
 	if(res.locals.uid){
-		//console.log("has uid: " + res.locals.uid)
 		res.redirect('/static/tmp');
 	}
 	else{
 		res.redirect('/static/auth');
-		//console.log("doesnt have uid");
 	}
 });
 
@@ -57,6 +58,7 @@ app.use(auth);
 //app.use(userCheck);
 app.use(static);
 app.use(api);
+
 
 app.listen(PORT, () => 
 	console.log('app is runnning on port 5000')
