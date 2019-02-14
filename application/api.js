@@ -1,137 +1,138 @@
 const express = require('express');
 const router = express.Router();
-//const cookieParser = require('cookie-parser');
 const cEnc = require('./cookieEncrypt.js');
 const mongoose = require('mongoose');
 const Route = require('../models/Route.js');
 const RouteModel = mongoose.model('RouteModel');
 
-const apiKey = "bGrMQxZPk3x6BKe-p9rljIC29lESM1hkSEkuc8gsW7iaeD2nLxbLRlYzc1-CDCGJ-ZJDGpzr-klFDXYpH_itOsJQYWoPE5wwqtdAzEZ1itZxs3ia2zL6MdnJQPN4W3Yx";
-//this should be in server.js, before anything else. if cookie is empty, redirect to login
+
+router.use((req,res, next) =>{
+	if(res.locals.uid && res.locals.uid != "tmp"){
+		next();
+	}
+	else{
+		res.redirect('403', '/static/auth')
+	}
+})
 
 
-/*router.post('/api/init', async (req, res) => {
+router.get('/api/init', async (req, res) => {
 	let uid = res.locals.uid;
-	let routeObj;
+	let routeRes, savedRoute;
 
 	try{
-		routeObj = await RouteModel.getByUserID(uid);
+		routeRes = await RouteModel.getCurrRoute(uid);
+		savedRoutes = await RouteModel.getSavedNames(uid);
 	} catch(err){
-		let errMsg = "There was an error getting the route for this user: " + errMsg
+		let errMsg = "there was an error initializing API: " + err
+		console.log(errMsg);
+		res.send({"actionSuccess": false, "error": errMsg});
+	}
+	console.log(routeRes)
+	if(routeRes.routeArr.length > 0){
+		let { routeArr, currentInd } = routeRes;
+		res.send({"actionSuccess": true, "routeArr": routeArr, "currentInd": currentInd, "savedRoute": savedRoutes});
+	}
+	else{
+		res.send({"actionSuccess": false, "error": "No current route", "savedRoutes": savedRoutes});
+	}
+});
+
+
+router.post('/api/update/route', async (req, res) => {
+	let uid = res.locals.uid;
+	let { routeArr, routeInd }= req.body;
+
+	try{
+		await RouteModel.updateRoute(uid, routeArr);
+	} catch(err){
+		let errMsg = "there was an error updating the user's route: " + err
 		console.log(errMsg);
 		res.send({"actionSuccess": false, "error": errMsg});
 	}
 
-	res.send({"actionSuccess": true, "routeObj": routeObj})
+	if(routeInd){
+		await RouteModel.updateCurrInd(uid, routeInd);
+	}
+
+	res.send({"actionSuccess": true});
 });
 
 
-router.post('/api/search', async (req, res) => {
-	//console.log("hit")
-	let { startAdd, endAdd, limitNum } = req.body;
-	let queryString = "https://api.yelp.com/v3/businesses/search?term=bar&sort_by=distance&location=\"" + startAdd + "\"";
-	let yelpRes;
-
-	if(limitNum){
-		queryString = queryString + "&limit=" + limitNum;
-	} else {
-		queryString = queryString + "&limit=10";
-	}
-	let options = {
-		headers: {"Authorization": "Bearer "+apiKey}
-	}
-
-	https.get(queryString, options, (resp) => {
-		let data = "";
-
-		resp.on('data', (chunk) => {
-		    data += chunk;
-		});
-
-		resp.on('end', () => {
-			let uid = req.cookies.uid;
-			data = JSON.parse(data);
-
-			if(data.error){
-				let errMsg = "There was an error accessing the Yelp API: " + data.error.description
-				console.log(errMsg);
-				res.send({"actionSuccess": false, "error": data.error.description});
-			}
-			else{
-				res.send({"actionSuccess": true, "locations":data.businesses});	
-			}
-		});
-	})
-	.on("error", (err) => {
-		console.log("There was an error accessing the Yelp API: " + err.description);
-		res.send({"actionSuccess": false, "error": err.description});
-	});
-})*/
-
-
-
-router.post('/api/saveRoute', async (req, res) => {
+router.post('/api/update/ind', async (req, res) => {
 	let uid = res.locals.uid;
-	//let myRoute = ['a','b','c'];
-	let { routeArr }= req.body;
+	let { currInd } = req.body;
 
-
-	/*if(uid != "tmp"){
-		var newRoute = new RouteModel({
-			userID: uid,
-			routeArr: routeArr
-		});
-
-		newRoute.save((err, doc) => {
-			if(err){
-				console.log('Database error in saving: '+ err);
-			}
-		});
-		res.send({'actionSuccess': true, 'saved': true});
+	try{
+		await RouteModel.updateCurrInd(uid, currInd);
+	} catch(err){
+		let errMsg = "there was an error updating the user's current index: " + err
+		console.log(errMsg);
+		res.send({"actionSuccess": false, "error": errMsg});
 	}
-	res.send({'test':true});*/
+
+	res.send({"actionSuccess": true});
 });
 
 
-router.get('/api/deleteRoute', async (req, res) => {
+router.post('/api/routes/:newAction', async (req, res) =>{
+
+	let newAction = req.params.newAction;
 	let uid = res.locals.uid;
 
 
-})
-
-
-router.get('/api/getRoute', async (req, res) => {
-	let uid = res.locals.uid;
-	//console.log('the userid is' + uid);
-	if(uid == "tmp"){
-		res.send({'actionSuccess': false, 'error': 'You are using a temporary account, your route info was not saved'});
-	}
-	else{
-		let routeObj;
-		try {
-			routeObj = await RouteModel.getByUserID(uid);
-		} catch(err){
-			res.send({'actionSuccess': false, 'error': 'Database error: ' + err});
+	if(newAction == "save"){
+		let { routeArr, routeName } = req.body;
+		let routeObj = {
+			"routeArr": routeArr,
+			"routeName": routeName
 		}
 
+		try{
+			await RouteModel.saveRoute(uid, routeObj)
+		} catch(err) {
+			let errMsg = "There was a database error while saving the route: " + err;
+			console.log(errMsg);
+			res.send({"actionSuccess": false, "error": errMsg});
+		}
+		res.send({"actionSuccess": true});
+	}
+	else if(newAction == "get"){
+		let { routeInd } = req.body;
+		let routeArr;
+
+		try{
+			routeArr = await RouteModel.getRoute(uid, routeInd);
+		} catch (err){
+			let errMsg = 'Database lookup error while getting route array: '+ err;
+			console.log(errMsg);
+			res.send({"actionSuccess": false, "error": errMsg});
+		}
+		console.log(routeArr, "is routeArr")
 		if(routeArr){
-			res.send({'actionSuccess': true, 'routeArr': routeArr});
+			res.send({"actionSuccess": true, "routeArr": routeArr});
 		}
 		else{
-			res.send({'actionSuccess': false, 'error': 'You have no saved iteneraries'});
+			res.send({"actionSuccess": false, "error": "Route doesn't seem to exist"});
 		}
 	}
-});
+	else if(newAction == "delete"){
+		let { routeName } = req.body;
 
+		try{
+			await RouteModel.delSavedRoute(uid, routeName);
+		} catch(err){
+			let errMsg = "There was a database error while deleting the route: " + err;
+			console.log(errMsg);
+			res.send({"actionSuccess": false, "error": errMsg});
+		}
 
-router.post('/api/updateRoute', async (req, res) => {
-
-});
-
-
-router.get('/api/deleteRoute', async (req, res) => {
-
-});
+		res.send({"actionSuccess": true});
+	}
+	else{
+		res.send({'actionSuccess': false, "error": "path not found"});
+	}
+})
 
 
 module.exports = router;

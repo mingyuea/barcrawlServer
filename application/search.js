@@ -13,7 +13,7 @@ router.post('/api/search', async (req, res) => {
 	if(limitNum){
 		queryString = queryString + "&limit=" + limitNum;
 	} else {
-		queryString = queryString + "&limit=10";
+		queryString = queryString + "&limit=6";
 	}
 	let options = {
 		headers: {"Authorization": "Bearer "+apiKey}

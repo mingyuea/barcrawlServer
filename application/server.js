@@ -44,19 +44,24 @@ app.use((req, res, next) =>{
 });
 
 app.use(search);
+app.use(auth);
+app.use(static);
 
 app.get('/', (req, res) => {
 	if(res.locals.uid){
-		res.redirect('/static/tmp');
+		if(res.locals.uid == "tmp"){
+			res.redirect('/static/tmp');
+		}
+		else{
+			res.redirect('/static/home');
+		}
 	}
 	else{
 		res.redirect('/static/auth');
 	}
 });
 
-app.use(auth);
 //app.use(userCheck);
-app.use(static);
 app.use(api);
 
 
